@@ -14,9 +14,8 @@ services:
   # Frontend Vite Service
   - type: static
     name: rppg-frontend
-    buildCommand: npm run build
-    publishPath: dist
-    rootDir: frontend
+    buildCommand: cd frontend && npm install && npm run build && ls -la dist
+    publishPath: frontend/dist
     envVars:
       - key: VITE_WS_URL
         value: wss://telegaruda-kee-ai.onrender.com/ws/scan
