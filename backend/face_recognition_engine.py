@@ -25,15 +25,15 @@ class FaceRecognitionEngine:
         self.mp_drawing = mp.solutions.drawing_utils
 
         self.face_mesh = self.mp_face_mesh.FaceMesh(
-            static_image_mode=True, # Improved robustness for single-frame network streams
+            static_image_mode=True, 
             max_num_faces=1,
             refine_landmarks=True,
-            min_detection_confidence=0.3,
+            min_detection_confidence=0.2, # Very sensitive
         )
 
         self.face_detection = self.mp_face_detection.FaceDetection(
-            model_selection=0,  # Short-range is better for normal webcam use
-            min_detection_confidence=0.3,
+            model_selection=0,
+            min_detection_confidence=0.2, # Very sensitive
         )
 
         # Face database

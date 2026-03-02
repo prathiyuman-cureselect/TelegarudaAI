@@ -74,10 +74,7 @@ class RegisterFaceRequest(BaseModel):
     image_data: str  # base64 encoded image
 
 
-# ──────────────────────────────────────────────
 # REST Endpoints
-# ──────────────────────────────────────────────
-
 @app.get("/")
 async def root():
     return {"status": "ok", "service": "rPPG Health Monitor", "version": "1.0.0"}
@@ -128,22 +125,11 @@ async def get_known_faces():
     return {"faces": names, "count": len(names)}
 
 
-# ──────────────────────────────────────────────
 # WebSocket Endpoint - Real-time Processing
-# ──────────────────────────────────────────────
-
 @app.websocket("/ws/scan")
 async def websocket_scan(websocket: WebSocket):
-    """
-    WebSocket endpoint for real-time rPPG scanning.
-    
-    Client sends: base64-encoded video frames
-    Server responds: JSON with vitals, face detection, motion data
-    """
     await websocket.accept()
-    logger.info("WebSocket client connected")
-
-    session = SessionState(fps=30.0)
+    session = SessionState(fps=10.0) # Assume 10fps from client
 
     try:
         while True:
@@ -189,21 +175,7 @@ async def websocket_scan(websocket: WebSocket):
                     })
                     continue
 
-                # Check scan duration
-                if session.should_stop():
-                    vitals = session.rppg.get_vitals()
-                    await websocket.send_json({
-                        "type": "results",
-                        "status": "time_limit_reached",
-                        "vitals": vitals,
-                        "motion_stats": session.motion.get_stats(),
-                        "signal_quality": session.rppg.get_signal_quality(),
-                    })
-                    session.is_active = False
-                    session.reset()
-                    continue
-
-                # Decode frame
+                # 1. Decode frame
                 frame_data = message.get("data", "")
                 if not frame_data:
                     continue
@@ -216,89 +188,75 @@ async def websocket_scan(websocket: WebSocket):
                     frame = cv2.imdecode(np.frombuffer(img_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)
 
                     if frame is None:
-                        logger.warning(f"Failed to decode frame from client. Base64 length: {len(frame_data)}")
                         continue
-                except Exception as e:
-                    logger.error(f"Error decoding frame: {e}")
+                except Exception:
                     continue
 
-                # Process frame
+                # 2. Process frame
                 timestamp = time.time()
+                elapsed = round(timestamp - session.start_time, 1) if session.start_time else 0
                 
-                # Diagnostic logging (every 10 frames)
-                if session.rppg._frame_count % 10 == 0:
-                    logger.info(f"Frame received: {frame.shape[1]}x{frame.shape[0]}. Total frames so far: {session.rppg._frame_count}")
+                # Check for 60s limit
+                if elapsed >= 60.0:
+                    vitals = session.rppg.get_vitals()
+                    await websocket.send_json({
+                        "type": "results",
+                        "status": "time_limit_reached",
+                        "vitals": vitals,
+                        "elapsed_time": 60.0,
+                    })
+                    session.is_active = False
+                    session.reset()
+                    continue
 
-                # 1. Luminance adjustment (for rPPG)
+                # Luminance adjustment
                 adjusted_frame = session.luminance.full_adjustment(frame)
 
-                # 2. Face detection (on the frame)
+                # Face detection
                 face_data = session.face_engine.detect_face(frame)
+                
+                vitals = None
+                motion_data = None
+                identity = None
 
                 if face_data and face_data.get("detected"):
-                    if session.rppg._frame_count % 10 == 0:
-                        logger.info(f"Face detected (conf: {face_data.get('confidence', 0):.2f}) at bbox {face_data['bbox']}")
-                    # 3. Motion analysis
+                    # Motion analysis
                     landmarks = face_data.get("landmarks")
                     motion_data = session.motion.analyze_frame(adjusted_frame, landmarks)
 
-                    # 4. rPPG signal processing (only if stable enough)
+                    # rPPG signal processing
                     if not session.motion.should_skip_frame():
                         rppg_roi = face_data.get("rppg_roi")
                         if rppg_roi is not None and rppg_roi.size > 0:
                             session.rppg.add_frame_roi(rppg_roi, timestamp)
 
-                    # 5. Face identification
-                    identity = None
+                    # Face identification
                     embedding = face_data.get("embedding")
                     if embedding is not None:
                         identity = session.face_engine.identify_face(embedding)
 
-                    # 6. Get current vitals
+                    # Get current vitals
                     vitals = session.rppg.get_vitals()
 
-                    # Build response
-                    response = {
-                        "type": "update",
-                        "timestamp": timestamp,
-                        "face": {
-                            "detected": True,
-                            "bbox": face_data["bbox"],
-                            "confidence": face_data["confidence"],
-                            "identity": identity,
-                        },
-                        "motion": {
-                            "score": motion_data["motion_score"],
-                            "level": motion_data["motion_level"],
-                            "is_stable": motion_data["is_stable"],
-                        },
-                        "vitals": vitals,
-                        "signal_quality": session.rppg.get_signal_quality(),
-                        "luminance": session.luminance.get_luminance_stats(),
-                        "elapsed_time": round(timestamp - session.start_time, 1) if session.start_time else 0,
-                    }
-
-                else:
-                    # No face detected
-                    response = {
-                        "type": "update",
-                        "timestamp": timestamp,
-                        "face": {
-                            "detected": False,
-                            "bbox": None,
-                            "confidence": 0,
-                            "identity": None,
-                        },
-                        "motion": {
-                            "score": 0,
-                            "level": "unknown",
-                            "is_stable": False,
-                        },
-                        "vitals": session.rppg.get_vitals(),
-                        "signal_quality": 0,
-                        "luminance": session.luminance.get_luminance_stats(),
-                        "elapsed_time": round(timestamp - session.start_time, 1) if session.start_time else 0,
-                    }
+                # ALWAYS build and send a response so the timer keeps moving
+                response = {
+                    "type": "update",
+                    "timestamp": timestamp,
+                    "elapsed_time": elapsed,
+                    "face": {
+                        "detected": face_data.get("detected", False) if face_data else False,
+                        "bbox": face_data.get("bbox") if face_data else None,
+                        "confidence": face_data.get("confidence", 0) if face_data else 0,
+                        "identity": identity,
+                    },
+                    "motion": {
+                        "score": motion_data["motion_score"] if motion_data else 0,
+                        "level": motion_data["motion_level"] if motion_data else "unknown",
+                        "is_stable": motion_data["is_stable"] if motion_data else True,
+                    } if motion_data else None,
+                    "vitals": vitals if vitals else session.rppg.get_vitals(),
+                    "signal_quality": session.rppg.get_signal_quality(),
+                }
 
                 await websocket.send_json(response)
 
