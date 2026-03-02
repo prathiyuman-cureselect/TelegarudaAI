@@ -1,0 +1,7 @@
+{
+    "name": "rppg-health-monitor-root",
+    "private": true,
+    "scripts": {
+        "build:frontend": "cd frontend && npm install && npm run build"
+    }
+}
