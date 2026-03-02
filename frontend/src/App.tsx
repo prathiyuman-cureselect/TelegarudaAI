@@ -72,7 +72,7 @@ function App() {
       if (frame) {
         sendFrame(frame);
       }
-    }, 200); // 5fps - much more stable for server CPU
+    }, 130); // ~8fps for faster stabilization
   }, [captureFrame, sendFrame]);
 
   const stopFrameCapture = useCallback(() => {
@@ -97,26 +97,38 @@ function App() {
     setElapsedTime(0);
 
     // Start camera
-    await startCamera();
+    try {
+      await startCamera();
 
-    // Connect WebSocket
-    if (!isConnected) {
-      connect();
-    }
+      // Connect WebSocket if needed
+      if (!isConnected) {
+        connect();
+      }
 
-    // Wait for connection then start scan
-    const checkAndStart = () => {
-      setTimeout(() => {
-        startScan();
-        startFrameCapture();
-      }, 500);
-    };
+      // Proactively poll for connection
+      const checkAndStart = () => {
+        if (isConnected) {
+          startScan();
+          startFrameCapture();
+        } else {
+          // If not connected yet, try again quickly (max 5 times)
+          let attempts = 0;
+          const poll = setInterval(() => {
+            attempts++;
+            if (isConnected || attempts > 20) {
+              clearInterval(poll);
+              if (isConnected) {
+                startScan();
+                startFrameCapture();
+              }
+            }
+          }, 100);
+        }
+      };
 
-    if (isConnected) {
       checkAndStart();
-    } else {
-      // Wait for connection
-      setTimeout(checkAndStart, 1500);
+    } catch (e) {
+      console.error("Failed to start scan:", e);
     }
   }, [startCamera, isConnected, connect, startScan, startFrameCapture]);
 

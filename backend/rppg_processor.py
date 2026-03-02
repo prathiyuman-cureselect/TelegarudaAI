@@ -368,7 +368,7 @@ class RPPGProcessor:
         Compute and return all vital signs.
         Returns a comprehensive dictionary of all estimated physiological parameters.
         """
-        min_frames = 60  # Minimum frames needed for any measurement
+        min_frames = 30  # Start showing data after ~6 seconds (at 5-10fps)
 
         if self._frame_count < min_frames:
             progress = min(100, int((self._frame_count / min_frames) * 100))
