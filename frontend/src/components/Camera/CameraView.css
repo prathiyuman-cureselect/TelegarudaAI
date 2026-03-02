@@ -1,0 +1,303 @@
+/* ══════════════════════════════════════════════
+   Camera View Styles
+   ══════════════════════════════════════════════ */
+
+.camera-view {
+    width: 100%;
+    animation: scaleIn 0.4s ease-out;
+}
+
+.camera-viewport {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-xl), 0 0 60px rgba(59, 130, 246, 0.05);
+}
+
+.camera-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    /* Mirror for selfie */
+}
+
+.camera-canvas-hidden {
+    display: none;
+}
+
+.camera-overlay-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    transform: scaleX(-1);
+    /* Mirror to match video */
+}
+
+/* ── Scan Line ── */
+.scan-line-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.scan-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(59, 130, 246, 0.3) 20%,
+            rgba(59, 130, 246, 0.7) 50%,
+            rgba(59, 130, 246, 0.3) 80%,
+            transparent 100%);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4), 0 0 30px rgba(59, 130, 246, 0.2);
+    animation: scanLine 3s linear infinite;
+}
+
+/* ── Camera Placeholder ── */
+.camera-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary);
+    gap: var(--space-md);
+}
+
+.camera-placeholder-icon {
+    font-size: 48px;
+    opacity: 0.4;
+    animation: float 3s ease-in-out infinite;
+}
+
+.camera-placeholder p {
+    color: var(--text-secondary);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.camera-placeholder span {
+    color: var(--text-tertiary);
+    font-size: 13px;
+}
+
+/* ── HUD Overlay ── */
+.camera-hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    padding: var(--space-md);
+}
+
+.hud-top-left {
+    position: absolute;
+    top: var(--space-md);
+    left: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.hud-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hud-indicator.active {
+    color: var(--accent-emerald);
+    border-color: rgba(52, 211, 153, 0.2);
+}
+
+.hud-indicator.inactive {
+    color: var(--accent-rose);
+    border-color: rgba(244, 63, 94, 0.2);
+}
+
+.hud-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.hud-identity {
+    padding: 4px 10px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--accent-cyan);
+    border: 1px solid rgba(34, 211, 238, 0.2);
+}
+
+/* ── Timer ── */
+.hud-top-right {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+}
+
+.hud-timer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+}
+
+.hud-timer-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-rose);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.hud-timer-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.hud-timer-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+/* ── Motion Indicator ── */
+.hud-bottom-left {
+    position: absolute;
+    bottom: var(--space-md);
+    left: var(--space-md);
+}
+
+.hud-motion {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hud-motion-bar {
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.hud-motion-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
+}
+
+.hud-motion-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ── Signal Quality ── */
+.hud-bottom-right {
+    position: absolute;
+    bottom: var(--space-md);
+    right: var(--space-md);
+}
+
+.hud-signal {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.signal-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 20px;
+}
+
+.signal-bar {
+    width: 3px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 1px;
+    transition: all 0.3s ease;
+}
+
+.signal-bar.active {
+    background: var(--accent-emerald);
+}
+
+.hud-signal-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .camera-viewport {
+        border-radius: var(--radius-lg);
+    }
+
+    .camera-hud {
+        padding: var(--space-sm);
+    }
+
+    .hud-indicator,
+    .hud-timer,
+    .hud-motion,
+    .hud-signal {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+}

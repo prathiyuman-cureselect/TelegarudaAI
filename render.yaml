@@ -1,0 +1,31 @@
+services:
+  # Backend FastAPI Service
+  - type: web
+    name: rppg-backend
+    env: docker
+    dockerContext: backend
+    dockerfilePath: backend/Dockerfile
+    plan: free # or standard if you need more resources for dlib
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8000
+
+  # Frontend Vite Service
+  - type: web
+    name: rppg-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: frontend/dist
+    rootDir: frontend
+    envVars:
+      - key: VITE_WS_URL
+        fromService:
+          type: web
+          name: rppg-backend
+          property: host
+        setting:
+          # Convert https to wss
+          # Render provides 'host' as e.g. rppg-backend.onrender.com
+          # We need to prepend 'wss://' and append '/ws/scan'
+          value: wss://rppg-backend.onrender.com/ws/scan

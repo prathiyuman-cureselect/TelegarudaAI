@@ -1,0 +1,319 @@
+/* ══════════════════════════════════════════════
+   Vitals Panel Styles
+   ══════════════════════════════════════════════ */
+
+.vitals-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+/* ── Header ── */
+.vitals-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+}
+
+.vitals-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.vitals-title-icon {
+    font-size: 20px;
+}
+
+.vitals-progress {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.vitals-progress-bar {
+    width: 80px;
+    height: 4px;
+    background: var(--bg-glass);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.vitals-progress-fill {
+    height: 100%;
+    background: var(--gradient-blue);
+    border-radius: var(--radius-full);
+    transition: width 0.5s ease;
+}
+
+.vitals-progress-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    min-width: 36px;
+}
+
+/* ── Grid ── */
+.vitals-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
+}
+
+/* ── Vital Card ── */
+.vital-card {
+    position: relative;
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+    cursor: default;
+    opacity: 0;
+}
+
+.vital-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-medium);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.vital-card.has-value {
+    border-color: var(--border-medium);
+}
+
+.vital-card.warning {
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.vital-card.critical {
+    border-color: rgba(244, 63, 94, 0.3);
+    animation: glowPulse 2s ease-in-out infinite;
+}
+
+.vital-card-glow {
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    border-radius: 50%;
+    filter: blur(60px);
+    transition: opacity var(--transition-slow);
+    pointer-events: none;
+}
+
+.vital-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.vital-card-icon {
+    font-size: 18px;
+}
+
+.vital-card-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.vital-card-body {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: var(--space-sm);
+}
+
+.vital-card-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+    transition: color var(--transition-normal);
+}
+
+.vital-card-value.measuring {
+    animation: pulse 1.5s ease-in-out infinite;
+    color: var(--text-tertiary);
+}
+
+.vital-card-unit {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
+.vital-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.vital-card-range {
+    font-size: 10px;
+    color: var(--text-tertiary);
+}
+
+.vital-card-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-emerald);
+}
+
+.vital-card-status-dot.warning {
+    background: var(--accent-amber);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.vital-card-status-dot.critical {
+    background: var(--accent-rose);
+    animation: pulse 0.8s ease-in-out infinite;
+}
+
+/* ── Shimmer Loading Effect ── */
+.vital-card-shimmer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.03) 50%,
+            transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s ease-in-out infinite;
+    pointer-events: none;
+}
+
+/* ── HRV Section ── */
+.hrv-section {
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    opacity: 0;
+}
+
+.hrv-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-md);
+}
+
+.hrv-metrics {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.hrv-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.hrv-metric-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent-violet);
+}
+
+.hrv-metric-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
+.hrv-divider {
+    width: 1px;
+    height: 36px;
+    background: var(--border-subtle);
+}
+
+/* ── Perfusion Card ── */
+.perfusion-card {
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    opacity: 0;
+}
+
+.perfusion-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-sm);
+}
+
+.perfusion-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent-rose);
+    margin-bottom: var(--space-sm);
+}
+
+.perfusion-bar {
+    height: 4px;
+    background: rgba(244, 63, 94, 0.15);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.perfusion-bar-fill {
+    height: 100%;
+    background: var(--gradient-rose);
+    border-radius: var(--radius-full);
+    transition: width 0.5s ease;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+    .vitals-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .vitals-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-sm);
+    }
+
+    .vital-card {
+        padding: var(--space-md);
+    }
+
+    .vital-card-value {
+        font-size: 22px;
+    }
+
+    .vital-card-label {
+        font-size: 10px;
+    }
+}
