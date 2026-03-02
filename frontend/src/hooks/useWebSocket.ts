@@ -131,10 +131,11 @@ export function useWebSocket(): UseWebSocketReturn {
         }
     }, []);
 
-    // Cleanup on unmount
+    // Auto-connect on mount
     useEffect(() => {
+        connect();
         return () => cleanup();
-    }, [cleanup]);
+    }, [connect, cleanup]);
 
     return {
         scanState,
