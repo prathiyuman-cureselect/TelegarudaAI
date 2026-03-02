@@ -12,11 +12,10 @@ services:
         value: 8000
 
   # Frontend Vite Service
-  - type: web
+  - type: static
     name: rppg-frontend
-    env: static
-    buildCommand: npm install && npm run build
-    staticPublishPath: frontend/dist
+    buildCommand: npm run build
+    publishPath: dist
     rootDir: frontend
     envVars:
       - key: VITE_WS_URL
