@@ -5,14 +5,13 @@ import VitalsPanel from './components/Vitals/VitalsPanel';
 import ResultsScreen from './components/Results/ResultsScreen';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useCamera } from './hooks/useCamera';
-import type { VitalSigns, FaceDetection, MotionData, ScanState } from './types';
+import type { VitalSigns, FaceDetection, MotionData } from './types';
 
 function App() {
   const {
     scanState,
     lastUpdate,
     connect,
-    disconnect,
     startScan,
     stopScan,
     sendFrame,
