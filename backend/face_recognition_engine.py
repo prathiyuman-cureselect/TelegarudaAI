@@ -33,8 +33,8 @@ class FaceRecognitionEngine:
         )
         
         self.face_detection = self.mp_face_detection.FaceDetection(
-            model_selection=0,  # Short-range model is usually better for webcams
-            min_detection_confidence=0.4, # Lowered from 0.6
+            model_selection=1,  # Full range (up to 5m) is more robust
+            min_detection_confidence=0.3, # Even more lenient
         )
 
         # Face database
@@ -61,7 +61,12 @@ class FaceRecognitionEngine:
             return None
 
         h, w, _ = frame.shape
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # Pre-process for detection only: Boost brightness and contrast
+        # This helps in dim lighting without affecting the rPPG signal (which uses the original/adjusted frame)
+        alpha = 1.3 # Contrast
+        beta = 10   # Brightness
+        detect_frame = cv2.convertScaleAbs(frame, alpha=alpha, beta=beta)
+        rgb_frame = cv2.cvtColor(detect_frame, cv2.COLOR_BGR2RGB)
 
         # Face mesh detection
         mesh_results = self.face_mesh.process(rgb_frame)

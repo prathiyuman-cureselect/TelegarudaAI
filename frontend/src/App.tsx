@@ -72,7 +72,7 @@ function App() {
       if (frame) {
         sendFrame(frame);
       }
-    }, 100); // ~10fps for processing
+    }, 200); // 5fps - much more stable for server CPU
   }, [captureFrame, sendFrame]);
 
   const stopFrameCapture = useCallback(() => {

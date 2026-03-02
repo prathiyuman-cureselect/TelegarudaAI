@@ -209,31 +209,35 @@ async def websocket_scan(websocket: WebSocket):
                     continue
 
                 try:
-                    # Handle data URL format (data:image/jpeg;base64,...)
                     if "," in frame_data:
                         frame_data = frame_data.split(",")[1]
 
                     img_bytes = base64.b64decode(frame_data)
-                    img_array = np.frombuffer(img_bytes, dtype=np.uint8)
-                    frame = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+                    frame = cv2.imdecode(np.frombuffer(img_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)
 
                     if frame is None:
+                        logger.warning(f"Failed to decode frame from client. Base64 length: {len(frame_data)}")
                         continue
-
                 except Exception as e:
-                    logger.error(f"Frame decode error: {e}")
+                    logger.error(f"Error decoding frame: {e}")
                     continue
 
                 # Process frame
                 timestamp = time.time()
+                
+                # Diagnostic logging (every 10 frames)
+                if session.rppg._frame_count % 10 == 0:
+                    logger.info(f"Frame received: {frame.shape[1]}x{frame.shape[0]}. Total frames so far: {session.rppg._frame_count}")
 
                 # 1. Luminance adjustment (for rPPG)
                 adjusted_frame = session.luminance.full_adjustment(frame)
 
-                # 2. Face detection (use original frame for better detection)
+                # 2. Face detection (on the frame)
                 face_data = session.face_engine.detect_face(frame)
 
                 if face_data and face_data.get("detected"):
+                    if session.rppg._frame_count % 10 == 0:
+                        logger.info(f"Face detected (conf: {face_data.get('confidence', 0):.2f}) at bbox {face_data['bbox']}")
                     # 3. Motion analysis
                     landmarks = face_data.get("landmarks")
                     motion_data = session.motion.analyze_frame(adjusted_frame, landmarks)
