@@ -52,6 +52,13 @@ class RPPGProcessor:
         # Bandpass filter for respiration (0.1 Hz - 0.5 Hz = 6-30 breaths/min)
         self._rr_low = 0.1
         self._rr_high = 0.5
+        
+        # Result smoothing (EMA filters)
+        self._hr_ema = 0.0
+        self._rr_ema = 0.0
+        self._spo2_ema = 0.0
+        self._temp_ema = 0.0
+        self._ema_alpha = 0.3 # Smoothing factor
 
     def reset(self):
         """Reset all buffers for a new measurement session."""
@@ -64,6 +71,10 @@ class RPPGProcessor:
         self._last_vitals = {}
         self._measurement_start_time = None
         self._frame_count = 0
+        self._hr_ema = 0.0
+        self._rr_ema = 0.0
+        self._spo2_ema = 0.0
+        self._temp_ema = 0.0
 
     def add_frame_roi(self, roi_pixels: np.ndarray, timestamp: Optional[float] = None):
         """
@@ -387,6 +398,16 @@ class RPPGProcessor:
         stress_index = self._compute_stress_index(hrv, heart_rate)
         perfusion_index = self._compute_perfusion_index()
 
+        # Apply EMA smoothing for stability
+        if heart_rate > 0:
+            self._hr_ema = heart_rate if self._hr_ema == 0 else (self._ema_alpha * heart_rate + (1 - self._ema_alpha) * self._hr_ema)
+        if respiration_rate > 0:
+            self._rr_ema = respiration_rate if self._rr_ema == 0 else (self._ema_alpha * respiration_rate + (1 - self._ema_alpha) * self._rr_ema)
+        if spo2 > 0:
+            self._spo2_ema = spo2 if self._spo2_ema == 0 else (0.4 * spo2 + (1 - 0.4) * self._spo2_ema)
+        if temperature > 0:
+            self._temp_ema = temperature if self._temp_ema == 0 else (0.2 * temperature + (1 - 0.2) * self._temp_ema)
+
         elapsed = 0.0
         if self._measurement_start_time and self._timestamps:
             elapsed = self._timestamps[-1] - self._measurement_start_time
@@ -396,11 +417,11 @@ class RPPGProcessor:
             "progress": 100,
             "frame_count": self._frame_count,
             "buffer_fullness": len(self._rppg_signal),
-            "heart_rate": heart_rate,
+            "heart_rate": round(self._hr_ema, 1),
             "blood_pressure": {"systolic": bp_sys, "diastolic": bp_dia},
-            "spo2": spo2,
-            "respiration_rate": respiration_rate,
-            "temperature": temperature,
+            "spo2": round(self._spo2_ema, 1),
+            "respiration_rate": round(self._rr_ema, 1),
+            "temperature": round(self._temp_ema, 1),
             "hrv": hrv,
             "stress_index": stress_index,
             "perfusion_index": perfusion_index,

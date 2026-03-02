@@ -227,11 +227,11 @@ async def websocket_scan(websocket: WebSocket):
                 # Process frame
                 timestamp = time.time()
 
-                # 1. Luminance adjustment
+                # 1. Luminance adjustment (for rPPG)
                 adjusted_frame = session.luminance.full_adjustment(frame)
 
-                # 2. Face detection
-                face_data = session.face_engine.detect_face(adjusted_frame)
+                # 2. Face detection (use original frame for better detection)
+                face_data = session.face_engine.detect_face(frame)
 
                 if face_data and face_data.get("detected"):
                     # 3. Motion analysis

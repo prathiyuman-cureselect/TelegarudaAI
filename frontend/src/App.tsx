@@ -214,6 +214,19 @@ function App() {
             )}
           </div>
 
+          {/* Status Feedback */}
+          {isScanning && (
+            <div className="scan-status-feedback animate-fade-in">
+              {!face?.detected ? (
+                <span className="status-warning">⚠️ Face lost. Please look at camera.</span>
+              ) : signalQuality < 0.3 ? (
+                <span className="status-info">🔄 Stabilizing signal (stay still)...</span>
+              ) : (
+                <span className="status-success">✅ High quality signal. Keep still.</span>
+              )}
+            </div>
+          )}
+
           {/* Error Messages */}
           {(wsError || cameraError) && (
             <div className="error-banner animate-fade-in">

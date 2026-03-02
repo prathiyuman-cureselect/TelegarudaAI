@@ -28,13 +28,13 @@ class FaceRecognitionEngine:
             static_image_mode=False,
             max_num_faces=1,
             refine_landmarks=True,
-            min_detection_confidence=0.6,
-            min_tracking_confidence=0.5,
+            min_detection_confidence=0.4, # Lowered from 0.6
+            min_tracking_confidence=0.4, # Lowered from 0.5
         )
-
+        
         self.face_detection = self.mp_face_detection.FaceDetection(
-            model_selection=1,  # Full range model
-            min_detection_confidence=0.6,
+            model_selection=0,  # Short-range model is usually better for webcams
+            min_detection_confidence=0.4, # Lowered from 0.6
         )
 
         # Face database
@@ -67,8 +67,37 @@ class FaceRecognitionEngine:
         mesh_results = self.face_mesh.process(rgb_frame)
 
         if not mesh_results.multi_face_landmarks:
-            return None
+            # Fallback to simple face detection
+            detect_results = self.face_detection.process(rgb_frame)
+            if not detect_results.detections:
+                return None
+            
+            # Get primary face from detection
+            detection = detect_results.detections[0]
+            bbox = detection.location_data.relative_bounding_box
+            
+            # Simple bounding box from detection
+            x_min = int(bbox.xmin * w)
+            y_min = int(bbox.ymin * h)
+            width = int(bbox.width * w)
+            height = int(bbox.height * h)
+            
+            # Forehead ROI approximation (upper 1/3 of face box)
+            # Use small crop for detection-only fallback
+            x, y, bw, bh = max(0, x_min), max(0, y_min), min(width, w-x_min), min(height, h-y_min)
+            rppg_roi = frame[y:y+bh//3, x+bw//4:x+3*bw//4] if bh > 10 else None
 
+            return {
+                "detected": True,
+                "bbox": {"x": x, "y": y, "width": bw, "height": bh},
+                "landmarks": None,
+                "landmark_count": 0,
+                "rppg_roi": rppg_roi,
+                "embedding": None,
+                "confidence": float(detection.score[0]),
+            }
+
+        # Face mesh detected
         face_landmarks = mesh_results.multi_face_landmarks[0]
         
         # Convert landmarks to pixel coordinates
@@ -83,7 +112,7 @@ class FaceRecognitionEngine:
         x_max = min(w, np.max(landmarks_array[:, 0]) + 20)
         y_max = min(h, np.max(landmarks_array[:, 1]) + 20)
 
-        # Extract ROI for rPPG (forehead region)
+        # Extract ROI for rPPG
         forehead_roi = self._extract_roi(frame, landmarks_array, self.forehead_indices)
         left_cheek_roi = self._extract_roi(frame, landmarks_array, self.left_cheek_indices)
         right_cheek_roi = self._extract_roi(frame, landmarks_array, self.right_cheek_indices)
