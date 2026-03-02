@@ -39,9 +39,9 @@ export function useCamera(): UseCameraReturn {
             const constraints: MediaStreamConstraints = {
                 video: {
                     facingMode: facingMode,
-                    width: { ideal: 640 },
-                    height: { ideal: 480 },
-                    frameRate: { ideal: 30 },
+                    width: { ideal: 480 },
+                    height: { ideal: 360 },
+                    frameRate: { ideal: 24 },
                 },
                 audio: false,
             };
@@ -70,13 +70,14 @@ export function useCamera(): UseCameraReturn {
         const ctx = canvas.getContext('2d');
         if (!ctx) return null;
 
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
+        // Force high-efficiency resolution for server throughput
+        canvas.width = 320;
+        canvas.height = 240;
 
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
         // Return as base64 JPEG (compressed for network efficiency)
-        return canvas.toDataURL('image/jpeg', 0.7);
+        return canvas.toDataURL('image/jpeg', 0.6);
     }, [isStreaming]);
 
     const switchCamera = useCallback(async () => {

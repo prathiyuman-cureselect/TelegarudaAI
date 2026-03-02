@@ -64,16 +64,13 @@ class MotionAnalyzer:
         }
 
         if self._prev_gray is not None:
-            # Compute dense optical flow
-            flow = cv2.calcOpticalFlowFarneback(
-                self._prev_gray, gray, None, **self._optical_flow_params
-            )
-
-            # Calculate motion magnitude
-            mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
-            motion_score = float(np.mean(mag))
-            avg_dx = float(np.mean(flow[..., 0]))
-            avg_dy = float(np.mean(flow[..., 1]))
+            # Compute simple frame difference instead of dense optical flow (much faster)
+            frame_diff = cv2.absdiff(self._prev_gray, gray)
+            motion_score = float(np.mean(frame_diff) / 2.5) # Normalized score
+            
+            # Simple average displacement approximation
+            avg_dx = 0.0
+            avg_dy = 0.0
 
             self._motion_history.append(motion_score)
 

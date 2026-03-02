@@ -59,13 +59,17 @@ class FaceRecognitionEngine:
         if frame is None or frame.size == 0:
             return None
 
-        h, w, _ = frame.shape
+        h_orig, w_orig, _ = frame.shape
+        
+        # Downsample for detection (massively speeds up MediaPipe)
+        detect_h, detect_w = 240, 320
+        detect_frame_small = cv2.resize(frame, (detect_w, detect_h))
+        
         # Pre-process for detection only: Boost brightness and contrast
-        # This helps in dim lighting without affecting the rPPG signal (which uses the original/adjusted frame)
         alpha = 1.3 # Contrast
         beta = 10   # Brightness
-        detect_frame = cv2.convertScaleAbs(frame, alpha=alpha, beta=beta)
-        rgb_frame = cv2.cvtColor(detect_frame, cv2.COLOR_BGR2RGB)
+        detect_frame_enhanced = cv2.convertScaleAbs(detect_frame_small, alpha=alpha, beta=beta)
+        rgb_frame = cv2.cvtColor(detect_frame_enhanced, cv2.COLOR_BGR2RGB)
 
         # Face mesh detection
         mesh_results = self.face_mesh.process(rgb_frame)
@@ -80,15 +84,14 @@ class FaceRecognitionEngine:
             detection = detect_results.detections[0]
             bbox = detection.location_data.relative_bounding_box
             
-            # Simple bounding box from detection
-            x_min = int(bbox.xmin * w)
-            y_min = int(bbox.ymin * h)
-            width = int(bbox.width * w)
-            height = int(bbox.height * h)
+            # Use original dimensions for final bbox
+            x_min = int(bbox.xmin * w_orig)
+            y_min = int(bbox.ymin * h_orig)
+            width = int(bbox.width * w_orig)
+            height = int(bbox.height * h_orig)
             
-            # Forehead ROI approximation (upper 1/3 of face box)
-            # Use small crop for detection-only fallback
-            x, y, bw, bh = max(0, x_min), max(0, y_min), min(width, w-x_min), min(height, h-y_min)
+            # Forehead ROI approximation
+            x, y, bw, bh = max(0, x_min), max(0, y_min), min(width, w_orig-x_min), min(height, h_orig-y_min)
             rppg_roi = frame[y:y+bh//3, x+bw//4:x+3*bw//4] if bh > 10 else None
 
             return {
@@ -104,17 +107,17 @@ class FaceRecognitionEngine:
         # Face mesh detected
         face_landmarks = mesh_results.multi_face_landmarks[0]
         
-        # Convert landmarks to pixel coordinates
+        # Convert landmarks to pixel coordinates of ORIGINAL frame
         landmarks_px = []
         for lm in face_landmarks.landmark:
-            landmarks_px.append([int(lm.x * w), int(lm.y * h)])
+            landmarks_px.append([int(lm.x * w_orig), int(lm.y * h_orig)])
         landmarks_array = np.array(landmarks_px)
 
-        # Get bounding box
+        # Get bounding box in original coordinates
         x_min = max(0, np.min(landmarks_array[:, 0]) - 20)
         y_min = max(0, np.min(landmarks_array[:, 1]) - 20)
-        x_max = min(w, np.max(landmarks_array[:, 0]) + 20)
-        y_max = min(h, np.max(landmarks_array[:, 1]) + 20)
+        x_max = min(w_orig, np.max(landmarks_array[:, 0]) + 20)
+        y_max = min(h_orig, np.max(landmarks_array[:, 1]) + 20)
 
         # Extract ROI for rPPG
         forehead_roi = self._extract_roi(frame, landmarks_array, self.forehead_indices)
